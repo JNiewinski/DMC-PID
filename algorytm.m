@@ -4,7 +4,7 @@ dane18=dlmread('dane18.txt');
 u=dane18(:,1);
 y=dane18(:,2);
 %% wybór regulatora 
-dl=200; %dlugosc symulacji
+dl=1000; %dlugosc symulacji
 %%%%%%%%%%%%%%%%%%%%%% wybor regulatora %%%%%%%%%%%%%%%%%%%%%%
 % regulator='PID';
 regulator='DMC';
@@ -59,13 +59,14 @@ for k=t+2:dl
     E=E+(ymod(k)-y(k))^2;
 end
 % transmitancja
-H=tf([0,0,0,0,0,b1,b2],[1,a1,a2,0,0,0,0,0],1);
-% stairs(ymod);
-% hold on;
-% stairs(y,':');
-% title(strcat('E=',num2str(E),' opoznienie=', num2str(t)));
-% legend('ymod','y');
-% saveas(figure(1),strcat('model_opoznie=',num2str(t),'.png'));
+% H=tf([0,0,0,0,0,b1,b2],[1,a1,a2,0,0,0,0,0],1);
+figure;
+stairs(ymod);
+hold on;
+stairs(y,':');
+title(strcat('E=',num2str(E),' opoznienie=', num2str(t)));
+legend('ymod','y');
+
 %% obliczanie parametrów
 if strcmp(regulator,'DMC') || strcmp(regulator,'DMCzo')
             
@@ -96,8 +97,7 @@ if strcmp(regulator,'DMC') || strcmp(regulator,'DMCzo')
                 end
             end
         end
-    K=inv(M'*eye*M+eye(Nu)*lambda)*M'*eye; % macierz K
-    K=K(1,:); % do regulacji potrzebujemy tylko 1 kolumny
+    K=inv(M'*M+eye(Nu)*lambda)*M'; % macierz K
 end % koniec DMC
 if strcmp(regulator,'PID')
     r0= K * (1+ 1/(2*Ti) + Td);
@@ -123,7 +123,7 @@ for k=t+2:dl
         ymod(k)=ymod(k)+zaklocenia*(rand-0.5)*0.1;
         zak(k)=ymod(k)-zak(k);
         %warto?? zmiany sterowania
-        dU=sum(K)*(yzad(k)-ymod(k))-K*Mp*dUp;
+        dU=K*((yzad(k)-ymod(k))-Mp*dUp);
 
             if strcmp(regulator,'DMCzo') && ogrdu == 1
                 if dU(1) >dumax
@@ -167,6 +167,7 @@ for k=t+2:dl
     
 end
 %% prezentacja wynikow
+figure;
 subplot(2,1,1);
 stairs(ymod);
 hold on;
